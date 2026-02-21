@@ -67,14 +67,39 @@ if (!isset($_SESSION['user_id'])) {
                 <div class="header-content">
                     <div>
                         <h1>Events Hub</h1>
-                        <p style="color: var(--text-muted);">Discover and manage your event schedule.</p>
+                        <p class="text-muted">Manage and discover your upcoming event milestones.</p>
                     </div>
-                    <div class="search-wrapper">
-                        <input type="text" id="event-search" class="search-input"
-                            placeholder="Search title, location...">
-                    </div>
-                    <button class="btn" style="width: auto; padding: 12px 24px;" id="btn-add-event">+ Create
+                    <button class="btn btn-primary" onclick="openModal('modal-event')" style="width: auto;">+ New
                         Event</button>
+                </div>
+
+                <!-- Advanced Filter Bar -->
+                <div class="glass-container filter-bar">
+                    <div class="filter-group">
+                        <label class="user-label">Search Title</label>
+                        <input type="text" id="filter-q" class="form-control" placeholder="Search events...">
+                    </div>
+                    <div class="filter-group">
+                        <label class="user-label">Location</label>
+                        <input type="text" id="filter-location" class="form-control" placeholder="Anywhere">
+                    </div>
+                    <div class="filter-group">
+                        <label class="user-label">Date Range</label>
+                        <div class="filter-row">
+                            <input type="date" id="filter-date-start" class="form-control">
+                            <input type="date" id="filter-date-end" class="form-control">
+                        </div>
+                    </div>
+                    <div class="filter-group">
+                        <label class="user-label">Status</label>
+                        <select id="filter-status" class="form-control">
+                            <option value="">All Statuses</option>
+                            <option value="invited">Invited</option>
+                            <option value="attending">Attending</option>
+                            <option value="maybe">Maybe</option>
+                            <option value="declined">Decline</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="ai-builder-section">
@@ -205,7 +230,6 @@ if (!isset($_SESSION['user_id'])) {
     <script>
         const eventList = document.getElementById('event-list');
         const inviteList = document.getElementById('invite-list');
-        const eventSearch = document.getElementById('event-search');
 
         // Navigation
         function switchTab(tab) {
@@ -221,23 +245,40 @@ if (!isset($_SESSION['user_id'])) {
 
         // Modals
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
-        document.getElementById('btn-add-event').onclick = () => {
-            document.getElementById('form-create-event').reset();
-            document.getElementById('event-id').value = '';
-            document.getElementById('modal-title').innerText = 'Create New Event';
-            document.getElementById('modal-event').classList.add('active');
-        };
+        function openModal(id) {
+            if (id === 'modal-event') {
+                document.getElementById('form-create-event').reset();
+                document.getElementById('event-id').value = '';
+                document.getElementById('modal-title').innerText = 'Create New Event';
+            }
+            document.getElementById(id).classList.add('active');
+        }
 
         // Fetch Events
-        async function fetchEvents(query = '') {
-            const resp = await fetch(`api/events.php?action=list&q=${query}`);
+        async function fetchEvents() {
+            const q = document.getElementById('filter-q').value;
+            const location = document.getElementById('filter-location').value;
+            const start = document.getElementById('filter-date-start').value;
+            const end = document.getElementById('filter-date-end').value;
+            const status = document.getElementById('filter-status').value;
+
+            const params = new URLSearchParams({
+                action: 'list',
+                q: q,
+                location: location,
+                date_start: start,
+                date_end: end,
+                status: status
+            });
+
+            const resp = await fetch(`api/events.php?${params.toString()}`);
             const data = await resp.json();
             renderEvents(data);
         }
 
         function renderEvents(events) {
             if (events.length === 0) {
-                eventList.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 100px; color: var(--text-muted);">No events found.</div>';
+                eventList.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 100px; color: var(--text-muted);">No events found matching your filters.</div>';
                 return;
             }
             eventList.innerHTML = events.map(e => `
@@ -259,10 +300,10 @@ if (!isset($_SESSION['user_id'])) {
                         <button class="btn-status ${e.user_status === 'declined' ? 'active' : ''}" onclick="updateStatus(${e.id}, 'declined')">Decline</button>
                     </div>
 
-                    <div style="display: flex; justify-content: flex-end; gap: 5px; margin-top: 20px; border-top: 1px solid var(--glass-border); padding-top: 15px;">
-                        <button class="btn" style="width: auto; padding: 5px 10px; font-size: 0.7rem;" onclick="openInvite(${e.id})">Invite</button>
-                        <button class="btn" style="width: auto; padding: 5px 10px; font-size: 0.7rem; background: rgba(255,255,255,0.1);" onclick="editEvent(${e.id})">Edit</button>
-                        <button class="btn" style="width: auto; padding: 5px 10px; font-size: 0.7rem; background: #ef4444;" onclick="deleteEvent(${e.id})">Del</button>
+                    <div class="btn-action-group">
+                        <button class="btn btn-sm btn-invite" onclick="openInvite(${e.id})">Invite</button>
+                        <button class="btn btn-sm btn-edit" onclick="editEvent(${e.id})">Edit</button>
+                        <button class="btn btn-sm btn-delete" onclick="deleteEvent(${e.id})">Delete</button>
                     </div>
                 </div>
             `).join('');
@@ -414,7 +455,9 @@ if (!isset($_SESSION['user_id'])) {
             fetchEvents();
         }
 
-        eventSearch.oninput = (e) => fetchEvents(e.target.value);
+        document.querySelectorAll('.filter-bar input, .filter-bar select').forEach(el => {
+            el.oninput = () => fetchEvents();
+        });
         fetchEvents();
     </script>
 </body>

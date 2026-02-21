@@ -24,8 +24,8 @@ loadEnv(__DIR__ . '/../.env');
 
 // Database Configuration
 define('DB_HOST', getenv('DB_HOST') ?: 'localhost');
-define('DB_NAME', getenv('DB_NAME') ?: 'event_scheduler');
-define('DB_USER', getenv('DB_USER') ?: 'root');
+define('DB_NAME', getenv('DB_NAME') ?: '');
+define('DB_USER', getenv('DB_USER') ?: '');
 define('DB_PASS', getenv('DB_PASS') ?: '');
 
 // AI Configuration
@@ -35,7 +35,18 @@ define('OPENAI_TEMPERATURE', getenv('OPENAI_TEMPERATURE') ?: 0.7);
 
 // App Settings
 define('APP_NAME', getenv('APP_NAME') ?: 'EventFlow AI');
-define('BASE_URL', getenv('BASE_URL') ?: 'http://localhost/event-scheduler/');
+
+// Dynamic Base URL Detection
+if (getenv('BASE_URL')) {
+    define('BASE_URL', getenv('BASE_URL'));
+} else {
+    $protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? "https" : "http";
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    $script_name = dirname($_SERVER['SCRIPT_NAME']);
+    // Ensure trailing slash
+    $base_url = $protocol . "://" . $host . rtrim($script_name, '/\\') . '/';
+    define('BASE_URL', $base_url);
+}
 
 // Start session if not already started
 if (session_status() === PHP_SESSION_NONE) {

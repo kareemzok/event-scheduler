@@ -33,6 +33,7 @@ A modern, glassy Event Management application with AI-powered features. Built wi
 2. **Setup Environment**:
    - Copy `.env.example` to `.env`.
    - Update `DB_NAME`, `DB_USER`, and `DB_PASS` in `.env`.
+   - `BASE_URL` is auto-detected, but can be overridden in `.env` if needed.
    - Add your `OPENAI_API_KEY` to enable AI features.
 3. **Database Setup**:
    - Create a database named `event_scheduler`.
@@ -40,7 +41,7 @@ A modern, glassy Event Management application with AI-powered features. Built wi
 4. **Seed Data**:
    - Run `php database/seed.php` from your terminal or visit the file in your browser to create demo users.
 5. **Access App**:
-   - Open `http://localhost/event-scheduler/` in your browser.
+   - Open your application's URL in your browser.
 
 ---
 

@@ -1,5 +1,5 @@
 <?php
-require_once '../includes/db.php';
+require_once __DIR__ . '/../includes/db.php';
 
 // Helper to get env or default
 if (!function_exists('get_env_val')) {

@@ -178,26 +178,38 @@ body {
     box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.03);
 }
 
-/* Search Wrapper */
-.search-wrapper {
-    position: relative;
-    width: 300px;
+/* Filter Bar */
+.filter-bar {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    padding: 24px;
+    margin-bottom: 32px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 20px;
 }
 
-.search-input {
+.filter-group {
+    flex: 1;
+    min-width: 200px;
+}
+
+.filter-row {
+    display: flex;
+    gap: 16px;
     width: 100%;
-    padding: 12px 20px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--glass-border);
-    border-radius: 24px;
-    color: white;
-    outline: none;
-    transition: all 0.3s ease;
 }
 
-.search-input:focus {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.3);
+@media (max-width: 1024px) {
+    .filter-group {
+        flex: 1 1 calc(50% - 16px);
+    }
+}
+
+@media (max-width: 640px) {
+    .filter-group {
+        flex: 1 1 100%;
+    }
 }
 
 /* Event Cards */
@@ -390,46 +402,68 @@ body {
 .btn {
     width: 100%;
     padding: 14px 24px;
-    border: 1px solid rgba(255, 255, 255, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.3);
     border-radius: 12px;
-    background: rgba(255, 255, 255, 0.75);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    color: #000000;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(8px);
+    color: #000;
     font-weight: 700;
     font-size: 0.95rem;
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-width: 120px;
 }
 
 .btn:hover {
-    background: rgba(255, 255, 255, 0.95);
+    background: #fff;
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(255, 255, 255, 0.2);
-    border-color: rgba(255, 255, 255, 0.6);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
 }
 
-.btn-secondary {
+.btn-sm {
+    padding: 8px 16px;
+    font-size: 0.8rem;
+    min-width: 80px;
+}
+
+.btn-action-group {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 24px;
+    border-top: 1px solid var(--glass-border);
+    padding-top: 20px;
+}
+
+.btn-invite {
     background: rgba(255, 255, 255, 0.15);
     color: white;
-    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.25);
-    border-color: rgba(255, 255, 255, 0.3);
+.btn-edit {
+    background: rgba(99, 102, 241, 0.2);
+    color: #a5b4fc;
+    border-color: rgba(99, 102, 241, 0.3);
 }
 
-.btn-danger {
-    background: rgba(239, 68, 68, 0.75);
+.btn-edit:hover {
+    background: rgba(99, 102, 241, 0.4);
     color: white;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(8px);
 }
 
-.btn-danger:hover {
-    background: rgba(220, 38, 38, 0.9);
+.btn-delete {
+    background: rgba(239, 68, 68, 0.1);
+    color: #fca5a5;
+    border-color: rgba(239, 68, 68, 0.2);
+}
+
+.btn-delete:hover {
+    background: rgba(239, 68, 68, 0.8);
+    color: white;
 }
 
 /* Utilities */

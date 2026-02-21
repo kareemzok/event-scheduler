@@ -87,8 +87,12 @@ function getEvent($pdo)
 
 function listEvents($pdo)
 {
-    $search = $_GET['q'] ?? '';
     $userId = $_SESSION['user_id'];
+    $q = $_GET['q'] ?? '';
+    $date_start = $_GET['date_start'] ?? '';
+    $date_end = $_GET['date_end'] ?? '';
+    $location = $_GET['location'] ?? '';
+    $status = $_GET['status'] ?? '';
 
     $query = "SELECT e.*, ep.status as user_status, u.username as creator_name 
               FROM events e 
@@ -98,12 +102,34 @@ function listEvents($pdo)
 
     $params = [$userId, $userId, $userId];
 
-    if ($search) {
-        $query .= " AND (e.title LIKE ? OR e.location LIKE ? OR e.description LIKE ?)";
-        $searchTerm = "%$search%";
-        $params[] = $searchTerm;
-        $params[] = $searchTerm;
-        $params[] = $searchTerm;
+    if ($q) {
+        $query .= " AND (e.title LIKE ? OR e.description LIKE ?)";
+        $params[] = "%$q%";
+        $params[] = "%$q%";
+    }
+
+    if ($date_start) {
+        $query .= " AND e.event_date >= ?";
+        $params[] = $date_start;
+    }
+
+    if ($date_end) {
+        $query .= " AND e.event_date <= ?";
+        $params[] = $date_end;
+    }
+
+    if ($location) {
+        $query .= " AND e.location LIKE ?";
+        $params[] = "%$location%";
+    }
+
+    if ($status) {
+        if ($status === 'invited') {
+            $query .= " AND ep.status IS NULL";
+        } else {
+            $query .= " AND ep.status = ?";
+            $params[] = $status;
+        }
     }
 
     $query .= " ORDER BY e.event_date ASC";
