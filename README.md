@@ -4,13 +4,17 @@ A modern, glassy Event Management application with AI-powered features. Built wi
 
 ## Key Features
 
-- **.env Configuration**: Security first. All sensitive data (database, OpenAI keys) is now managed through environment variables.
-- **Enhanced Authentication**: Fully database-backed login system with `password_hash` and `password_verify` for maximum security.
-- **AI-Powered descriptions**: Integrated OpenAI support to generate catchy event descriptions automatically.
-- **Glassmorphism UI**: High-end aesthetic with backdrop blurs, vibrant gradients, and smooth interactions.
-- **Event Management**: Complete CRUD operations for events.
-- **Status & Invitations**: Real-time attendance tracking and user-to-user invitation system.
-- **Responsive Design**: Works beautifully across desktop and mobile devices.
+- **AI Event Builder**: Full event generation from simple natural language prompts (e.g., "A tech meetup next Friday").
+- **AI-Powered Magic**: Generate engaging descriptions and catchy titles automatically using OpenAI GPT models.
+- **AI Usage Control**: Smart request logging with configurable daily limits per user to manage API costs effectively.
+- **Advanced Event Filtering**: Powerful multi-criteria search system filtering by title, location, date range, and RSVP status.
+- **Role-Based Security**: Strict permission system where Admins can manage all content, while Users manage their own events.
+- **Interactive Attendance**: Real-time RSVP system (Attending, Interested, etc.) with instant dashboard updates.
+- **Invitations System**: Invite other users to your events with a dedicated notifications/invitations hub.
+- **Management Dashboard**: Comprehensive CRUD operations for all your events in a sleek interface.
+- **Glassmorphism UI**: Premium aesthetic with backdrop blurs, vibrant gradients, and smooth interactive micro-animations.
+- **User Profiles**: Personal profile management with custom bios and account details.
+- **.env Configuration**: Enterprise-grade security managing all sensitive database and API credentials via environment variables.
 
 ## Demo Credentials
 
