@@ -242,6 +242,10 @@ if (!isset($_SESSION['user_id'])) {
     <script>
         const eventList = document.getElementById('event-list');
         const inviteList = document.getElementById('invite-list');
+        const currentUser = {
+            id: <?php echo $_SESSION['user_id']; ?>,
+            role: '<?php echo $_SESSION['role'] ?? 'user'; ?>'
+        };
 
         // Navigation
         function switchTab(tab) {
@@ -314,8 +318,12 @@ if (!isset($_SESSION['user_id'])) {
 
                     <div class="btn-action-group">
                         <button class="btn btn-sm btn-invite" onclick="openInvite(${e.id})">Invite</button>
-                        <button class="btn btn-sm btn-edit" onclick="editEvent(${e.id})">Edit</button>
-                        <button class="btn btn-sm btn-delete" onclick="deleteEvent(${e.id})">Delete</button>
+                        <button class="btn btn-sm btn-edit ${e.created_by == currentUser.id || currentUser.role === 'admin' ? '' : 'btn-disabled'}" 
+                                ${e.created_by == currentUser.id || currentUser.role === 'admin' ? '' : 'disabled'} 
+                                onclick="editEvent(${e.id})">Edit</button>
+                        <button class="btn btn-sm btn-delete ${e.created_by == currentUser.id || currentUser.role === 'admin' ? '' : 'btn-disabled'}" 
+                                ${e.created_by == currentUser.id || currentUser.role === 'admin' ? '' : 'disabled'} 
+                                onclick="deleteEvent(${e.id})">Delete</button>
                     </div>
                 </div>
             `).join('');
@@ -492,6 +500,11 @@ if (!isset($_SESSION['user_id'])) {
         async function editEvent(id) {
             const resp = await fetch(`api/events.php?action=get&id=${id}`);
             const e = await resp.json();
+
+            if (e.created_by != currentUser.id && currentUser.role !== 'admin') {
+                return alert('Unauthorized: You do not have permission to edit this event.');
+            }
+
             document.getElementById('event-id').value = e.id;
             document.getElementById('ev-title').value = e.title;
             document.getElementById('ev-date').value = e.event_date.replace(' ', 'T');
@@ -502,6 +515,13 @@ if (!isset($_SESSION['user_id'])) {
         }
 
         async function deleteEvent(id) {
+            // Pre-check permission
+            const resp = await fetch(`api/events.php?action=get&id=${id}`);
+            const e = await resp.json();
+            if (e.created_by != currentUser.id && currentUser.role !== 'admin') {
+                return alert('Unauthorized: You do not have permission to delete this event.');
+            }
+
             if (!confirm('Delete this event?')) return;
             const fd = new FormData(); fd.append('id', id);
             await fetch('api/events.php?action=delete', { method: 'POST', body: fd });

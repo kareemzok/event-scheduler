@@ -141,6 +141,6 @@ if ($action === 'suggest_description') {
     }
 
     // Fallback/Error
-    echo json_encode(['error' => 'AI could not generate event. Please try again or provide more details.']);
+    echo json_encode(['error' => 'AI could not generate event. Please try again.']);
 }
 ?>
