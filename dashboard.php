@@ -108,7 +108,7 @@ if (!isset($_SESSION['user_id'])) {
         <div class="glass-container modal-content">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h2 id="modal-title">Create New Event</h2>
-                <button class="btn ai-magic-btn" id="btn-ai-magic">🪄 AI Magic</button>
+                <button class="btn ai-magic-btn" id="btn-ai-magic">✨ AI Magic</button>
             </div>
 
             <div class="form-group">
@@ -305,7 +305,7 @@ if (!isset($_SESSION['user_id'])) {
                     document.getElementById('ev-location').value = e.location;
                     document.getElementById('ev-desc').value = e.description;
                     if (e.event_date) document.getElementById('ev-date').value = e.event_date.replace(' ', 'T');
-                    
+
                     document.getElementById('modal-event').classList.add('active');
                 } else {
                     alert(data.error);
@@ -313,7 +313,7 @@ if (!isset($_SESSION['user_id'])) {
             } catch (err) {
                 alert('Connection error. Please check your network.');
             }
-            
+
             btn.innerText = 'Build Event';
             btn.classList.remove('ai-loading');
         };

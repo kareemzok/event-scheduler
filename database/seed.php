@@ -1,28 +1,39 @@
 <?php
 require_once '../includes/db.php';
 
-try {
-    // 1. Clear existing data (Optional, handle with care)
-    // $pdo->exec("SET FOREIGN_KEY_CHECKS = 0;");
-    // $pdo->exec("TRUNCATE TABLE event_participants;");
-    // $pdo->exec("TRUNCATE TABLE events;");
-    // $pdo->exec("TRUNCATE TABLE users;");
-    // $pdo->exec("SET FOREIGN_KEY_CHECKS = 1;");
+// Helper to get env or default
+if (!function_exists('get_env_val')) {
+    function get_env_val($key, $default)
+    {
+        return getenv($key) ?: $default;
+    }
+}
 
-    // 2. Create Users
-    $password = password_hash('password123', PASSWORD_DEFAULT);
+try {
+    // 1. Clear existing data
+    $pdo->exec("SET FOREIGN_KEY_CHECKS = 0;");
+    $pdo->exec("TRUNCATE TABLE event_participants;");
+    $pdo->exec("TRUNCATE TABLE events;");
+    $pdo->exec("TRUNCATE TABLE users;");
+    $pdo->exec("SET FOREIGN_KEY_CHECKS = 1;");
+
+    // 2. Create Users from Environment or Defaults
+    $admin_user = get_env_val('DEMO_ADMIN_USER', 'admin_demo');
+    $admin_pass = get_env_val('DEMO_ADMIN_PASS', 'admin_pass_2026');
+    $user_user = get_env_val('DEMO_USER_USER', 'user_demo');
+    $user_pass = get_env_val('DEMO_USER_PASS', 'user_pass_2026');
 
     $users = [
-        ['admin', 'admin@eventflow.ai', 'admin', 'The boss of events.'],
-        ['john_doe', 'john@gmail.com', 'user', 'Tech enthusiast and networking pro.'],
-        ['jane_smith', 'jane@outlook.com', 'user', 'Creative director and event planner.'],
-        ['alex_vance', 'alex@company.com', 'user', 'AI researcher and developer.']
+        [$admin_user, 'admin@eventflow.ai', $admin_pass, 'admin', 'System Administrator'],
+        [$user_user, 'demo@eventflow.ai', $user_pass, 'user', 'Demo User for testing features.'],
+        ['jane_smith', 'jane@outlook.com', 'jane_pass_2026', 'user', 'Creative director and event planner.'],
     ];
 
     $userIds = [];
     $stmt = $pdo->prepare("INSERT INTO users (username, email, password, role, bio) VALUES (?, ?, ?, ?, ?)");
     foreach ($users as $user) {
-        $stmt->execute([$user[0], $user[1], $password, $user[2], $user[3]]);
+        $hashed_pass = password_hash($user[2], PASSWORD_DEFAULT);
+        $stmt->execute([$user[0], $user[1], $hashed_pass, $user[3], $user[4]]);
         $userIds[$user[0]] = $pdo->lastInsertId();
     }
 
@@ -33,7 +44,7 @@ try {
             'A global gathering of AI experts to discuss the future of intelligence.',
             date('Y-m-d H:i:s', strtotime('+30 days')),
             'San Francisco, CA',
-            $userIds['admin']
+            $userIds[$admin_user]
         ],
         [
             'React Workshop: Advanced Patterns',
@@ -41,13 +52,6 @@ try {
             date('Y-m-d H:i:s', strtotime('+15 days')),
             'London, UK',
             $userIds['jane_smith']
-        ],
-        [
-            'Summer Rooftop Mixer',
-            'Join us for drinks and networking under the stars.',
-            date('Y-m-d H:i:s', strtotime('+45 days')),
-            'New York, NY',
-            $userIds['john_doe']
         ]
     ];
 
@@ -58,20 +62,12 @@ try {
         $eventIds[] = $pdo->lastInsertId();
     }
 
-    // 4. Create Invitations
-    $stmt = $pdo->prepare("INSERT INTO event_participants (event_id, user_id, status, invited_by) VALUES (?, ?, ?, ?)");
-
-    // Admin invites everyone to the AI Summit
-    foreach ($userIds as $username => $uid) {
-        if ($username !== 'admin') {
-            $stmt->execute([$eventIds[0], $uid, 'invited', $userIds['admin']]);
-        }
-    }
-
-    // Jane invites Admin to React Workshop
-    $stmt->execute([$eventIds[1], $userIds['admin'], 'attending', $userIds['jane_smith']]);
-
     echo "Database seeded successfully!\n";
+    echo "---------------------------\n";
+    echo "Admin Credentials: $admin_user / $admin_pass\n";
+    echo "User Credentials: $user_user / $user_pass\n";
+    echo "---------------------------\n";
+
 } catch (PDOException $e) {
     die("Error seeding database: " . $e->getMessage() . "\n");
 }

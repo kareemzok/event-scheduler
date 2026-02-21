@@ -18,9 +18,9 @@ function callOpenAI($prompt)
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
-        'model' => 'gpt-3.5-turbo',
+        'model' => defined('OPENAI_MODEL') ? OPENAI_MODEL : 'gpt-3.5-turbo',
         'messages' => [['role' => 'user', 'content' => $prompt]],
-        'temperature' => 0.7
+        'temperature' => defined('OPENAI_TEMPERATURE') ? (float) OPENAI_TEMPERATURE : 0.7
     ]));
     curl_setopt($ch, CURLOPT_HTTPHEADER, [
         'Content-Type: application/json',
