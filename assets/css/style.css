@@ -10,6 +10,7 @@
     --bg-gradient: radial-gradient(circle at top left, #1a1a1a 0%, #000000 100%);
     --card-bg: rgba(255, 255, 255, 0.03);
     --sidebar-width: 280px;
+    --mobile-nav-height: 60px;
 }
 
 /* Base Styles */
@@ -91,6 +92,26 @@ body {
     overflow: hidden;
 }
 
+@media (max-width: 1024px) {
+    .dashboard-container {
+        grid-template-columns: 1fr;
+        height: auto;
+        overflow: visible;
+    }
+
+    .sidebar {
+        border-radius: 0;
+        padding: 20px;
+        position: relative;
+        height: auto;
+    }
+
+    .main-content {
+        padding: 24px;
+        overflow: visible;
+    }
+}
+
 .sidebar {
     padding: 32px;
     display: flex;
@@ -145,6 +166,18 @@ body {
     margin-bottom: 48px;
 }
 
+@media (max-width: 640px) {
+    .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 20px;
+    }
+
+    .header-content .btn {
+        width: 100%;
+    }
+}
+
 /* Forms & Inputs */
 .form-group {
     margin-bottom: 24px;
@@ -170,6 +203,22 @@ body {
     outline: none;
     transition: all 0.3s ease;
     font-size: 0.95rem;
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+select.form-control {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+    padding-right: 40px;
+    background-color: #1a1a1a;
+}
+
+select.form-control option {
+    background-color: #1a1a1a;
+    color: white;
 }
 
 .form-control:focus {
@@ -191,7 +240,7 @@ body {
 
 .filter-group {
     flex: 1;
-    min-width: 200px;
+    min-width: 150px;
 }
 
 .filter-row {
@@ -337,6 +386,36 @@ body {
     display: flex;
     gap: 10px;
     margin-top: 15px;
+}
+
+@media (max-width: 640px) {
+    .ai-builder-input {
+        flex-direction: column;
+    }
+
+    .ai-builder-input .btn {
+        width: 100%;
+    }
+}
+
+.ai-limit-badge {
+    background: rgba(139, 92, 246, 0.2);
+    color: #c4b5fd;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+.ai-limit-badge {
+    background: rgba(139, 92, 246, 0.2);
+    color: #c4b5fd;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    border: 1px solid rgba(139, 92, 246, 0.3);
 }
 
 .ai-builder-input input {

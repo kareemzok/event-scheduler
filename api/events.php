@@ -124,12 +124,8 @@ function listEvents($pdo)
     }
 
     if ($status) {
-        if ($status === 'invited') {
-            $query .= " AND ep.status IS NULL";
-        } else {
-            $query .= " AND ep.status = ?";
-            $params[] = $status;
-        }
+        $query .= " AND ep.status = ?";
+        $params[] = $status;
     }
 
     $query .= " ORDER BY e.event_date ASC";

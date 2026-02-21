@@ -32,6 +32,7 @@ define('DB_PASS', getenv('DB_PASS') ?: '');
 define('OPENAI_API_KEY', getenv('OPENAI_API_KEY') ?: '');
 define('OPENAI_MODEL', getenv('OPENAI_MODEL') ?: 'gpt-4o-mini');
 define('OPENAI_TEMPERATURE', getenv('OPENAI_TEMPERATURE') ?: 0.7);
+define('AI_DAILY_LIMIT', getenv('AI_DAILY_LIMIT') ?: 3);
 
 // App Settings
 define('APP_NAME', getenv('APP_NAME') ?: 'EventFlow AI');
