@@ -75,22 +75,22 @@ if (!isset($_SESSION['user_id'])) {
 
                 <!-- Advanced Filter Bar -->
                 <div class="glass-container filter-bar">
-                    <div class="filter-group">
+                    <div class="filter-group filter-search">
                         <label class="user-label">Search Title</label>
                         <input type="text" id="filter-q" class="form-control" placeholder="Search events...">
                     </div>
-                    <div class="filter-group">
+                    <div class="filter-group filter-location">
                         <label class="user-label">Location</label>
                         <input type="text" id="filter-location" class="form-control" placeholder="Anywhere">
                     </div>
-                    <div class="filter-group">
+                    <div class="filter-group filter-date">
                         <label class="user-label">Date Range</label>
                         <div class="filter-row">
                             <input type="date" id="filter-date-start" class="form-control">
                             <input type="date" id="filter-date-end" class="form-control">
                         </div>
                     </div>
-                    <div class="filter-group">
+                    <div class="filter-group filter-status">
                         <label class="user-label">Status</label>
                         <select id="filter-status" class="form-control">
                             <option value="">All Statuses</option>
@@ -104,7 +104,8 @@ if (!isset($_SESSION['user_id'])) {
 
                 <div class="ai-builder-section">
                     <h3 style="display: flex; align-items: center; gap: 8px;">🚀 AI Event Builder</h3>
-                    <p style="font-size: 0.85rem; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center;">
+                    <p
+                        style="font-size: 0.85rem; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center;">
                         <span>Describe your event and let AI set it up for you!</span>
                         <span class="ai-limit-badge">Limit: <span id="ai-builder-remaining">...</span> left</span>
                     </p>
@@ -112,7 +113,9 @@ if (!isset($_SESSION['user_id'])) {
                         <div style="flex: 1; position: relative;">
                             <input type="text" id="ai-builder-prompt" class="form-control" maxlength="250"
                                 placeholder="e.g. A networking dinner for developers next Friday at 7pm in Downtown...">
-                            <small id="prompt-counter" style="position: absolute; right: 10px; bottom: -18px; font-size: 0.7rem; color: var(--text-muted);">0 / 250</small>
+                            <small id="prompt-counter"
+                                style="position: absolute; right: 10px; bottom: -18px; font-size: 0.7rem; color: var(--text-muted);">0
+                                / 250</small>
                         </div>
                         <button class="btn ai-magic-btn" id="btn-ai-build"
                             style="width: auto; white-space: nowrap;">Build Event</button>
@@ -139,7 +142,8 @@ if (!isset($_SESSION['user_id'])) {
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h2 id="modal-title">Create New Event</h2>
                 <div style="display: flex; align-items: center; gap: 10px;">
-                    <span class="ai-limit-badge" style="font-size: 0.75rem;">Limit: <span id="ai-magic-remaining">...</span> left</span>
+                    <span class="ai-limit-badge" style="font-size: 0.75rem;">Limit: <span
+                            id="ai-magic-remaining">...</span> left</span>
                     <button class="btn ai-magic-btn" id="btn-ai-magic">✨ AI Magic</button>
                 </div>
             </div>
@@ -340,7 +344,7 @@ if (!isset($_SESSION['user_id'])) {
                 if (data.success) {
                     document.getElementById('ai-builder-remaining').innerText = data.remaining;
                     document.getElementById('ai-magic-remaining').innerText = data.remaining;
-                    
+
                     // Disable buttons if limit reached
                     const buildBtn = document.getElementById('btn-ai-build');
                     const magicBtn = document.getElementById('btn-ai-magic');
@@ -364,7 +368,7 @@ if (!isset($_SESSION['user_id'])) {
         }
 
         // Character counter
-        document.getElementById('ai-builder-prompt').oninput = function() {
+        document.getElementById('ai-builder-prompt').oninput = function () {
             const len = this.value.length;
             document.getElementById('prompt-counter').innerText = `${len} / 250`;
         };
@@ -505,7 +509,7 @@ if (!isset($_SESSION['user_id'])) {
         }
 
         document.querySelectorAll('.filter-bar input, .filter-bar select').forEach(el => {
-        el.oninput = () => fetchEvents();
+            el.oninput = () => fetchEvents();
         });
         fetchEvents();
         updateRemainingLimit();
