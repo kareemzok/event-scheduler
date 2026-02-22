@@ -231,6 +231,51 @@ if (!isset($_SESSION['user_id'])) {
         </div>
     </div>
 
+    <!-- Invite Share Modal -->
+    <div class="modal" id="modal-invite-share">
+        <div class="glass-container modal-content">
+            <h2 style="margin-bottom: 8px;" id="invite-share-title">Invitation Link Ready</h2>
+            <p id="invite-share-note" style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 16px;">
+                Share this response link with the invitee.
+            </p>
+            <div class="form-group">
+                <label>Invite Response Link</label>
+                <div class="share-link-row">
+                    <input type="text" id="invite-share-link" class="form-control" readonly>
+                    <button type="button" class="btn btn-sm" style="width: auto;" onclick="copyInviteLink('invite-share-link')">Copy</button>
+                </div>
+            </div>
+            <div class="social-share-group" id="invite-share-buttons"></div>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button type="button" class="btn btn-danger" onclick="closeModal('modal-invite-share')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Invite Link Response Modal -->
+    <div class="modal" id="modal-invite-response">
+        <div class="glass-container modal-content">
+            <h2 style="margin-bottom: 8px;">You Have an Event Invitation</h2>
+            <p id="invite-response-meta" style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 14px;"></p>
+            <h3 id="invite-response-title" class="event-title" style="font-size: 1.3rem; margin-bottom: 8px;"></h3>
+            <p id="invite-response-description" style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 18px;"></p>
+            <div class="form-group">
+                <label>Share This Invite Link</label>
+                <div class="share-link-row">
+                    <input type="text" id="invite-response-link" class="form-control" readonly>
+                    <button type="button" class="btn btn-sm" style="width: auto;" onclick="copyInviteLink('invite-response-link')">Copy</button>
+                </div>
+            </div>
+            <div class="social-share-group" id="invite-response-share-buttons"></div>
+            <div style="display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap;">
+                <button type="button" class="btn" style="width: auto;" onclick="respondFromInviteLink('attending')">Accept</button>
+                <button type="button" class="btn" style="width: auto;" onclick="respondFromInviteLink('maybe')">Maybe</button>
+                <button type="button" class="btn" style="width: auto; background: #ef4444;" onclick="respondFromInviteLink('declined')">Decline</button>
+                <button type="button" class="btn btn-danger" style="margin-left: auto; width: auto;" onclick="closeModal('modal-invite-response')">Close</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Profile Modal -->
     <div class="modal" id="modal-profile">
         <div class="glass-container modal-content">
@@ -260,6 +305,8 @@ if (!isset($_SESSION['user_id'])) {
             role: '<?php echo $_SESSION['role'] ?? 'user'; ?>'
         };
         const AI_ENABLED = <?php echo AI_ENABLED ? 'true' : 'false'; ?>;
+        const inviteTokenFromUrl = new URLSearchParams(window.location.search).get('invite_token');
+        let activeInviteFromLink = null;
 
         // Navigation
         function switchTab(tab) {
@@ -282,6 +329,99 @@ if (!isset($_SESSION['user_id'])) {
                 document.getElementById('modal-title').innerText = 'Create New Event';
             }
             document.getElementById(id).classList.add('active');
+        }
+
+        function formatEventDate(dateValue) {
+            if (!dateValue) return '';
+            const date = new Date(dateValue);
+            return Number.isNaN(date.getTime()) ? dateValue : date.toLocaleString();
+        }
+
+        function buildSocialLinks(url, text) {
+            const encodedUrl = encodeURIComponent(url);
+            const encodedText = encodeURIComponent(text);
+            return [
+                { label: 'Share on X', url: `https://twitter.com/intent/tweet?text=${encodedText}%20${encodedUrl}` },
+                { label: 'Share on Facebook', url: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}` },
+                { label: 'Share on LinkedIn', url: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}` },
+                { label: 'Share on WhatsApp', url: `https://wa.me/?text=${encodedText}%20${encodedUrl}` }
+            ];
+        }
+
+        function renderSocialButtons(containerId, url, text) {
+            const container = document.getElementById(containerId);
+            const links = buildSocialLinks(url, text);
+            container.innerHTML = links.map((item) => `
+                <a class="btn btn-sm share-btn" href="${item.url}" target="_blank" rel="noopener noreferrer">${item.label}</a>
+            `).join('');
+        }
+
+        async function copyInviteLink(inputId) {
+            const input = document.getElementById(inputId);
+            if (!input || !input.value) return;
+
+            try {
+                await navigator.clipboard.writeText(input.value);
+                alert('Invite link copied.');
+            } catch (err) {
+                input.select();
+                document.execCommand('copy');
+                alert('Invite link copied.');
+            }
+        }
+
+        function clearInviteTokenFromUrl() {
+            const currentUrl = new URL(window.location.href);
+            currentUrl.searchParams.delete('invite_token');
+            window.history.replaceState({}, document.title, currentUrl.toString());
+        }
+
+        function openInviteShareModal(payload) {
+            const titleText = payload.event_title ? `Invitation Link for "${payload.event_title}"` : 'Invitation Link Ready';
+            document.getElementById('invite-share-title').innerText = titleText;
+            document.getElementById('invite-share-note').innerText = payload.invitee_signup_required
+                ? 'User is not registered yet. Ask them to sign up (or log in) using that username/email, then open this link to accept.'
+                : 'Share this response link with the invitee.';
+            document.getElementById('invite-share-link').value = payload.invite_url;
+            renderSocialButtons('invite-share-buttons', payload.invite_url, payload.share_text || 'You are invited to an event. Respond here:');
+            document.getElementById('modal-invite-share').classList.add('active');
+        }
+
+        function openInviteResponseModal(invite) {
+            activeInviteFromLink = invite;
+
+            document.getElementById('invite-response-title').innerText = invite.title || 'Event Invitation';
+            document.getElementById('invite-response-description').innerText = invite.description || 'No description provided.';
+            document.getElementById('invite-response-meta').innerText = `Invited by ${invite.inviter_name} - ${formatEventDate(invite.event_date)} - ${invite.location || 'Online'}`;
+            document.getElementById('invite-response-link').value = invite.invite_url;
+
+            const shareText = `${invite.inviter_name} invited you to "${invite.title}" on EventFlow AI.`;
+            renderSocialButtons('invite-response-share-buttons', invite.invite_url, shareText);
+            document.getElementById('modal-invite-response').classList.add('active');
+        }
+
+        async function tryOpenInviteFromToken() {
+            if (!inviteTokenFromUrl) return;
+            try {
+                const params = new URLSearchParams({
+                    action: 'get_invite_by_token',
+                    token: inviteTokenFromUrl
+                });
+
+                const resp = await fetch(`api/invitations.php?${params.toString()}`);
+                const data = await resp.json();
+
+                if (!data.success) {
+                    alert(data.error || 'Unable to open this invite link.');
+                    clearInviteTokenFromUrl();
+                    return;
+                }
+
+                openInviteResponseModal(data.invite);
+            } catch (err) {
+                alert('Unable to open invite link right now.');
+                clearInviteTokenFromUrl();
+            }
         }
 
         // Fetch Events
@@ -467,30 +607,109 @@ if (!isset($_SESSION['user_id'])) {
 
         // Invitations
         async function fetchInvitations() {
-            const resp = await fetch('api/invitations.php?action=list_invites');
-            const data = await resp.json();
+            let data = [];
+            try {
+                const resp = await fetch('api/invitations.php?action=list_invites');
+                data = await resp.json();
+            } catch (err) {
+                inviteList.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 30px; color: #ef4444;">Unable to load invitations.</div>';
+                return;
+            }
+
+            if (!Array.isArray(data)) {
+                inviteList.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 30px; color: #ef4444;">Unable to load invitations.</div>';
+                return;
+            }
+
+            if (data.length === 0) {
+                inviteList.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 30px; color: var(--text-muted);">No pending invitations.</div>';
+                return;
+            }
+
             inviteList.innerHTML = data.map(e => `
                 <div class="glass-container event-card">
                     <h3 class="event-title">${e.title}</h3>
                     <p style="font-size: 0.85rem; color: var(--text-muted);">From: ${e.inviter}</p>
+                    <p style="font-size: 0.8rem; color: var(--text-muted);">${formatEventDate(e.event_date)} - ${e.location || 'Online'}</p>
                     <div style="display: flex; gap: 10px; margin-top: 15px;">
                         <button class="btn" onclick="respondInvite(${e.id}, 'attending')">Accept</button>
+                        <button class="btn" onclick="respondInvite(${e.id}, 'maybe')">Maybe</button>
                         <button class="btn" style="background: #ef4444;" onclick="respondInvite(${e.id}, 'declined')">Decline</button>
                     </div>
                 </div>
             `).join('');
         }
 
-        async function respondInvite(id, status) {
-            const fd = new FormData(); fd.append('event_id', id); fd.append('status', status);
-            await fetch('api/invitations.php?action=respond', { method: 'POST', body: fd });
-            fetchInvitations();
+        async function respondInvite(id, status, silent = false) {
+            const fd = new FormData();
+            fd.append('event_id', id);
+            fd.append('status', status);
+
+            try {
+                const resp = await fetch('api/invitations.php?action=respond', { method: 'POST', body: fd });
+                const data = await resp.json();
+
+                if (!data.success) {
+                    if (!silent) alert(data.error || 'Unable to save invitation response.');
+                    return false;
+                }
+
+                fetchInvitations();
+                fetchEvents();
+                return true;
+            } catch (err) {
+                if (!silent) alert('Unable to save invitation response right now.');
+                return false;
+            }
+        }
+
+        async function respondFromInviteLink(status) {
+            if (!activeInviteFromLink) return;
+            const success = await respondInvite(activeInviteFromLink.event_id, status, true);
+            if (!success) return;
+
+            closeModal('modal-invite-response');
+            clearInviteTokenFromUrl();
+            activeInviteFromLink = null;
+            alert('Your invitation response has been saved.');
         }
 
         function openInvite(id) {
+            const inviteForm = document.getElementById('form-invite-user');
+            inviteForm.reset();
             document.getElementById('invite-event-id').value = id;
             document.getElementById('modal-invite').classList.add('active');
         }
+
+        document.getElementById('form-invite-user').onsubmit = async (e) => {
+            e.preventDefault();
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.innerText = 'Sending...';
+
+            try {
+                const resp = await fetch('api/invitations.php?action=invite', {
+                    method: 'POST',
+                    body: new FormData(e.target)
+                });
+                const data = await resp.json();
+
+                if (!data.success) {
+                    alert(data.error || 'Unable to send invitation.');
+                    return;
+                }
+
+                closeModal('modal-invite');
+                e.target.reset();
+                openInviteShareModal(data);
+                fetchInvitations();
+            } catch (err) {
+                alert('Unable to send invitation right now.');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerText = 'Send Invitation';
+            }
+        };
 
         // Profile
         async function openProfile() {
@@ -554,6 +773,7 @@ if (!isset($_SESSION['user_id'])) {
         });
         fetchEvents();
         updateRemainingLimit();
+        tryOpenInviteFromToken();
     </script>
 </body>
 

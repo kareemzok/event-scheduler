@@ -497,6 +497,29 @@ select.form-control option {
     padding: 40px;
 }
 
+.share-link-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.share-link-row .form-control {
+    flex: 1;
+}
+
+.social-share-group {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.share-btn {
+    width: 100%;
+    min-width: 0;
+    text-decoration: none;
+}
+
 /* Buttons */
 .btn {
     width: 100%;
@@ -541,6 +564,10 @@ select.form-control option {
 .btn-invite {
     background: rgba(255, 255, 255, 0.15);
     color: white;
+}
+
+.btn-invite:hover {
+    color: #000;
 }
 
 .btn-edit {
@@ -675,4 +702,18 @@ select.form-control option {
 
 .ai-loading {
     animation: pulse 1.5s infinite;
+}
+
+@media (max-width: 640px) {
+    .share-link-row {
+        flex-direction: column;
+    }
+
+    .share-link-row .btn {
+        width: 100% !important;
+    }
+
+    .social-share-group {
+        grid-template-columns: 1fr;
+    }
 }

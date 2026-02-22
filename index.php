@@ -1,8 +1,17 @@
 <?php
 require_once 'includes/config.php';
 
+if (!empty($_GET['invite_token'])) {
+    $_SESSION['pending_invite_token'] = substr(trim($_GET['invite_token']), 0, 64);
+}
+
 if (isset($_SESSION['user_id'])) {
-    header('Location: dashboard.php');
+    $redirect = 'dashboard.php';
+    if (!empty($_SESSION['pending_invite_token'])) {
+        $redirect .= '?invite_token=' . rawurlencode($_SESSION['pending_invite_token']);
+        unset($_SESSION['pending_invite_token']);
+    }
+    header('Location: ' . $redirect);
     exit;
 }
 ?>

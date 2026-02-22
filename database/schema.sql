@@ -42,3 +42,21 @@ CREATE TABLE IF NOT EXISTS event_participants (
     FOREIGN KEY (invited_by) REFERENCES users(id) ON DELETE SET NULL,
     UNIQUE KEY unique_participant (event_id, user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Invitation Links Table (shareable unique links per event+invitee)
+CREATE TABLE IF NOT EXISTS invitation_links (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    event_id INT NOT NULL,
+    invitee_user_id INT NULL,
+    invitee_identifier VARCHAR(191) NULL,
+    invited_by INT NOT NULL,
+    token VARCHAR(64) NOT NULL UNIQUE,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_event_invitee (event_id, invitee_user_id),
+    UNIQUE KEY unique_event_invitee_identifier (event_id, invitee_identifier),
+    FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE,
+    FOREIGN KEY (invitee_user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (invited_by) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

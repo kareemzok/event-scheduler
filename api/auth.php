@@ -41,7 +41,7 @@ function register($pdo)
         $_SESSION['username'] = $username;
         $_SESSION['role'] = 'user';
 
-        header('Location: ../dashboard.php');
+        header('Location: ' . buildPostAuthRedirect());
     } catch (PDOException $e) {
         if ($e->getCode() == 23000) {
             header('Location: ../index.php?error=already_exists');
@@ -71,9 +71,22 @@ function login($pdo)
         $_SESSION['username'] = $user['username'];
         $_SESSION['role'] = $user['role'];
 
-        header('Location: ../dashboard.php');
+        header('Location: ' . buildPostAuthRedirect());
     } else {
         header('Location: ../index.php?error=invalid_credentials');
     }
     exit;
+}
+
+function buildPostAuthRedirect()
+{
+    $redirect = '../dashboard.php';
+
+    if (!empty($_SESSION['pending_invite_token'])) {
+        $token = substr(trim($_SESSION['pending_invite_token']), 0, 64);
+        $redirect .= '?invite_token=' . rawurlencode($token);
+        unset($_SESSION['pending_invite_token']);
+    }
+
+    return $redirect;
 }

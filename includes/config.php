@@ -44,7 +44,10 @@ if (getenv('BASE_URL')) {
 } else {
     $protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? "https" : "http";
     $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-    $script_name = dirname($_SERVER['SCRIPT_NAME']);
+    $script_name = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '/'));
+    if (str_ends_with($script_name, '/api')) {
+        $script_name = dirname($script_name);
+    }
     // Ensure trailing slash
     $base_url = $protocol . "://" . $host . rtrim($script_name, '/\\') . '/';
     define('BASE_URL', $base_url);
