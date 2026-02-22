@@ -33,7 +33,8 @@ function createEvent($pdo)
     $description = $_POST['description'] ?? '';
     $date = $_POST['event_date'] ?? '';
     $location = $_POST['location'] ?? '';
-    $is_public = isset($_POST['is_public']) ? 1 : 0;
+    $is_public = isset($_POST['is_public']) ? (int)$_POST['is_public'] : 1;
+    $is_public = $is_public === 0 ? 0 : 1;
 
     if (!$title || !$date) {
         echo json_encode(['error' => 'Missing required fields']);
@@ -66,14 +67,16 @@ function updateEvent($pdo)
     $description = $_POST['description'] ?? '';
     $date = $_POST['event_date'] ?? '';
     $location = $_POST['location'] ?? '';
+    $is_public = isset($_POST['is_public']) ? (int)$_POST['is_public'] : 1;
+    $is_public = $is_public === 0 ? 0 : 1;
 
     $stmt = $pdo->prepare("SELECT created_by FROM events WHERE id = ?");
     $stmt->execute([$id]);
     $event = $stmt->fetch();
 
     if ($event && ($event['created_by'] == $_SESSION['user_id'] || $_SESSION['role'] === 'admin')) {
-        $stmt = $pdo->prepare("UPDATE events SET title = ?, description = ?, event_date = ?, location = ? WHERE id = ?");
-        $stmt->execute([$title, $description, $date, $location, $id]);
+        $stmt = $pdo->prepare("UPDATE events SET title = ?, description = ?, event_date = ?, location = ?, is_public = ? WHERE id = ?");
+        $stmt->execute([$title, $description, $date, $location, $is_public, $id]);
         echo json_encode(['success' => true]);
     } else {
         echo json_encode(['error' => 'Unauthorized']);

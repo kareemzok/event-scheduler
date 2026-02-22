@@ -226,6 +226,16 @@ if (!isset($_SESSION['user_id'])) {
                     <textarea id="ev-desc" name="description" class="form-control" rows="3"
                         placeholder="Tell us about the event..."></textarea>
                 </div>
+                <div class="form-group">
+                    <label>Visibility</label>
+                    <div class="visibility-toggle" role="radiogroup" aria-label="Event visibility">
+                        <input type="radio" id="ev-public" name="is_public" value="1" checked>
+                        <label for="ev-public">Public</label>
+                        <input type="radio" id="ev-private" name="is_public" value="0">
+                        <label for="ev-private">Private</label>
+                    </div>
+                    <small class="form-helper">Public events are visible to all users.</small>
+                </div>
                 <div style="display: flex; gap: 10px; margin-top: 20px;">
                     <button type="button" class="btn btn-danger" onclick="closeModal('modal-event')">Cancel</button>
                     <button type="submit" class="btn">Save Event</button>
@@ -364,6 +374,8 @@ if (!isset($_SESSION['user_id'])) {
                 document.getElementById('form-create-event').reset();
                 document.getElementById('event-id').value = '';
                 document.getElementById('modal-title').innerText = 'Create New Event';
+                document.getElementById('ev-public').checked = true;
+                document.getElementById('ev-private').checked = false;
             }
             document.getElementById(id).classList.add('active');
         }
@@ -503,11 +515,18 @@ if (!isset($_SESSION['user_id'])) {
                 eventList.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 100px; color: var(--text-muted);">No events found matching your filters.</div>';
                 return;
             }
-            eventList.innerHTML = events.map(e => `
+            eventList.innerHTML = events.map(e => {
+                const isPublic = Number(e.is_public) === 1;
+                const visibilityClass = isPublic ? 'visibility-public' : 'visibility-private';
+                const visibilityLabel = isPublic ? 'Public' : 'Private';
+                return `
                 <div class="glass-container event-card">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
                         <div class="event-tag">${e.location || 'Online'}</div>
-                        <span class="status-badge status-${e.user_status || 'invited'}">${e.user_status || 'Invited'}</span>
+                        <div class="event-badges">
+                            <span class="visibility-badge ${visibilityClass}">${visibilityLabel}</span>
+                            <span class="status-badge status-${e.user_status || 'invited'}">${e.user_status || 'Invited'}</span>
+                        </div>
                     </div>
                     <h3 class="event-title">${e.title}</h3>
                     <div class="event-info">
@@ -532,7 +551,8 @@ if (!isset($_SESSION['user_id'])) {
                                 onclick="deleteEvent(${e.id})">Delete</button>
                     </div>
                 </div>
-            `).join('');
+            `;
+            }).join('');
         }
 
         async function updateStatus(eventId, status) {
@@ -609,6 +629,10 @@ if (!isset($_SESSION['user_id'])) {
 
                     if (data.success) {
                         const e = data.event;
+                        document.getElementById('event-id').value = '';
+                        document.getElementById('modal-title').innerText = 'Create New Event';
+                        document.getElementById('ev-public').checked = true;
+                        document.getElementById('ev-private').checked = false;
                         document.getElementById('ev-title').value = e.title;
                         document.getElementById('ev-location').value = e.location;
                         document.getElementById('ev-desc').value = e.description;
@@ -842,6 +866,9 @@ if (!isset($_SESSION['user_id'])) {
             document.getElementById('ev-date').value = e.event_date.replace(' ', 'T');
             document.getElementById('ev-location').value = e.location;
             document.getElementById('ev-desc').value = e.description;
+            const isPublic = Number(e.is_public) === 1;
+            document.getElementById('ev-public').checked = isPublic;
+            document.getElementById('ev-private').checked = !isPublic;
             document.getElementById('modal-title').innerText = 'Edit Event';
             document.getElementById('modal-event').classList.add('active');
         }

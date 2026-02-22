@@ -9,9 +9,13 @@ A modern, glassy Event Management application with AI-powered features. Built wi
 - **AI Usage Control**: Smart request logging with configurable daily limits per user to manage API costs effectively.
 - **Advanced Event Filtering**: Powerful multi-criteria search system filtering by title, location, date range, and RSVP status.
 - **Role-Based Security**: Strict permission system where Admins can manage all content, while Users manage their own events.
-- **Interactive Attendance**: Real-time RSVP system (Attending, Interested, etc.) with instant dashboard updates.
-- **Invitations System**: Invite other users to your events with a dedicated notifications/invitations hub.
+- **Interactive Attendance**: Real-time RSVP system (Attending, Maybe, Declined) with instant dashboard updates.
+- **Invitations System**: Invite users by username or email with dedicated Received/Sent invitation views.
+- **Secure Shareable Invite Links**: Token-based invite URLs with one-click copy and social share actions.
+- **Pre-Registration Invites**: Send invitations to people who are not registered yet, then let them claim the invite after sign-up/login using the same link.
+- **Invite Deep-Link Authentication**: Preserves invitation tokens through login/register and opens the invite response flow automatically after authentication.
 - **Management Dashboard**: Comprehensive CRUD operations for all your events in a sleek interface.
+- **Event Templates**: Quick-create common event types (Meeting, Workshop, Party, Conference) from built-in presets.
 - **Glassmorphism UI**: Premium aesthetic with backdrop blurs, vibrant gradients, and smooth interactive micro-animations.
 - **User Profiles**: Personal profile management with custom bios and account details.
 - **.env Configuration**: Enterprise-grade security managing all sensitive database and API credentials via environment variables.
