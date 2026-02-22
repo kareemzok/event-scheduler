@@ -166,6 +166,17 @@ function respondToInvite(PDO $pdo, int $userId): void
 
 function listInvites(PDO $pdo, int $userId): void
 {
+    $scope = strtolower(trim((string) ($_GET['scope'] ?? 'received')));
+    if ($scope === 'sent') {
+        listSentInvites($pdo, $userId);
+        return;
+    }
+
+    listReceivedInvites($pdo, $userId);
+}
+
+function listReceivedInvites(PDO $pdo, int $userId): void
+{
     $stmt = $pdo->prepare("
         SELECT e.*, u.username as inviter, il.token
         FROM events e
@@ -184,6 +195,97 @@ function listInvites(PDO $pdo, int $userId): void
     unset($invite);
 
     jsonResponse($invites);
+}
+
+function listSentInvites(PDO $pdo, int $userId): void
+{
+    $stmt = $pdo->prepare("
+        SELECT
+            e.id,
+            e.title,
+            e.description,
+            e.event_date,
+            e.location,
+            il.id AS invitation_id,
+            il.event_id,
+            il.invitee_user_id,
+            il.invitee_identifier,
+            il.token,
+            il.is_active,
+            il.updated_at AS invited_at,
+            u.username AS invitee_username,
+            ep.status AS invitee_status,
+            ep.responded_at
+        FROM invitation_links il
+        JOIN events e ON e.id = il.event_id
+        LEFT JOIN users u ON u.id = il.invitee_user_id
+        LEFT JOIN event_participants ep ON ep.event_id = il.event_id AND ep.user_id = il.invitee_user_id
+        WHERE il.invited_by = ?
+        ORDER BY il.updated_at DESC
+    ");
+    $stmt->execute([$userId]);
+    $invites = $stmt->fetchAll();
+
+    foreach ($invites as &$invite) {
+        $status = resolveSentInviteStatus($invite);
+        $inviteeUsername = trim((string) ($invite['invitee_username'] ?? ''));
+        $inviteeIdentifier = trim((string) ($invite['invitee_identifier'] ?? ''));
+        if ($inviteeUsername !== '') {
+            $invite['invitee'] = $inviteeUsername;
+        } elseif ($inviteeIdentifier !== '') {
+            $invite['invitee'] = $inviteeIdentifier;
+        } else {
+            $invite['invitee'] = 'User #' . (int) ($invite['invitee_user_id'] ?? 0);
+        }
+        $invite['invite_status'] = $status;
+        $invite['invite_status_label'] = formatInviteStatusLabel($status);
+        $invite['invite_status_class'] = mapInviteStatusClass($status);
+        $invite['invite_url'] = ((int) $invite['is_active'] === 1 && !empty($invite['token']))
+            ? buildInviteUrl($invite['token'])
+            : null;
+    }
+    unset($invite);
+
+    jsonResponse($invites);
+}
+
+function resolveSentInviteStatus(array $invite): string
+{
+    if ($invite['invitee_user_id'] === null) {
+        return 'pending_signup';
+    }
+
+    $status = (string) ($invite['invitee_status'] ?? '');
+    if (in_array($status, ['attending', 'maybe', 'declined'], true)) {
+        return $status;
+    }
+
+    return 'invited';
+}
+
+function formatInviteStatusLabel(string $status): string
+{
+    switch ($status) {
+        case 'attending':
+            return 'Attending';
+        case 'maybe':
+            return 'Maybe';
+        case 'declined':
+            return 'Declined';
+        case 'pending_signup':
+            return 'Pending Signup';
+        default:
+            return 'Pending Response';
+    }
+}
+
+function mapInviteStatusClass(string $status): string
+{
+    if (in_array($status, ['attending', 'maybe', 'declined'], true)) {
+        return $status;
+    }
+
+    return 'invited';
 }
 
 function getInviteByToken(PDO $pdo, int $userId): void

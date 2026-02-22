@@ -137,9 +137,31 @@ if (!isset($_SESSION['user_id'])) {
             </div>
 
             <div id="tab-invitations" style="display: none;">
-                <h1 style="margin-bottom: 20px;">Pending Invitations</h1>
-                <div class="event-grid" id="invite-list">
-                    <!-- Invites load here -->
+                <div class="invitations-layout">
+                    <aside class="glass-container invitations-menu">
+                        <button type="button" class="invite-view-link active" data-invite-view="received"
+                            onclick="switchInvitationView('received')">Received Invitations</button>
+                        <button type="button" class="invite-view-link" data-invite-view="sent"
+                            onclick="switchInvitationView('sent')">Sent Invitations</button>
+                    </aside>
+                    <section class="invitations-content">
+                        <div id="invite-view-received">
+                            <h1 style="margin-bottom: 8px;">Received Invitations</h1>
+                            <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 20px;">Pending
+                                invitations sent to you.</p>
+                            <div class="event-grid" id="invite-received-list">
+                                <!-- Received invites load here -->
+                            </div>
+                        </div>
+                        <div id="invite-view-sent" style="display: none;">
+                            <h1 style="margin-bottom: 8px;">Sent Invitations</h1>
+                            <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 20px;">Invitations
+                                you have sent.</p>
+                            <div class="event-grid" id="invite-sent-list">
+                                <!-- Sent invites load here -->
+                            </div>
+                        </div>
+                    </section>
                 </div>
             </div>
         </main>
@@ -299,7 +321,8 @@ if (!isset($_SESSION['user_id'])) {
 
     <script>
         const eventList = document.getElementById('event-list');
-        const inviteList = document.getElementById('invite-list');
+        const inviteReceivedList = document.getElementById('invite-received-list');
+        const inviteSentList = document.getElementById('invite-sent-list');
         const currentUser = {
             id: <?php echo $_SESSION['user_id']; ?>,
             role: '<?php echo $_SESSION['role'] ?? 'user'; ?>'
@@ -307,6 +330,7 @@ if (!isset($_SESSION['user_id'])) {
         const AI_ENABLED = <?php echo AI_ENABLED ? 'true' : 'false'; ?>;
         const inviteTokenFromUrl = new URLSearchParams(window.location.search).get('invite_token');
         let activeInviteFromLink = null;
+        let activeInviteView = 'received';
 
         // Navigation
         function switchTab(tab) {
@@ -316,8 +340,21 @@ if (!isset($_SESSION['user_id'])) {
             document.getElementById('tab-dashboard').style.display = tab === 'dashboard' ? 'block' : 'none';
             document.getElementById('tab-invitations').style.display = tab === 'invitations' ? 'block' : 'none';
 
-            if (tab === 'invitations') fetchInvitations();
+            if (tab === 'invitations') fetchInvitations(activeInviteView);
             else fetchEvents();
+        }
+
+        function switchInvitationView(view) {
+            activeInviteView = view === 'sent' ? 'sent' : 'received';
+
+            document.querySelectorAll('.invite-view-link').forEach((el) => {
+                el.classList.toggle('active', el.dataset.inviteView === activeInviteView);
+            });
+
+            document.getElementById('invite-view-received').style.display = activeInviteView === 'received' ? 'block' : 'none';
+            document.getElementById('invite-view-sent').style.display = activeInviteView === 'sent' ? 'block' : 'none';
+
+            fetchInvitations(activeInviteView);
         }
 
         // Modals
@@ -356,18 +393,33 @@ if (!isset($_SESSION['user_id'])) {
             `).join('');
         }
 
+        async function copyTextToClipboard(value) {
+            if (!value) return;
+
+            try {
+                await navigator.clipboard.writeText(value);
+            } catch (err) {
+                const input = document.createElement('textarea');
+                input.value = value;
+                input.style.position = 'absolute';
+                input.style.left = '-9999px';
+                document.body.appendChild(input);
+                input.select();
+                document.execCommand('copy');
+                document.body.removeChild(input);
+            }
+            alert('Invite link copied.');
+        }
+
         async function copyInviteLink(inputId) {
             const input = document.getElementById(inputId);
             if (!input || !input.value) return;
+            await copyTextToClipboard(input.value);
+        }
 
-            try {
-                await navigator.clipboard.writeText(input.value);
-                alert('Invite link copied.');
-            } catch (err) {
-                input.select();
-                document.execCommand('copy');
-                alert('Invite link copied.');
-            }
+        async function copyInviteUrl(url) {
+            if (!url) return;
+            await copyTextToClipboard(url);
         }
 
         function clearInviteTokenFromUrl() {
@@ -606,27 +658,43 @@ if (!isset($_SESSION['user_id'])) {
         }
 
         // Invitations
-        async function fetchInvitations() {
+        async function fetchInvitations(scope = activeInviteView) {
+            const targetList = scope === 'sent' ? inviteSentList : inviteReceivedList;
+            if (!targetList) return;
+
             let data = [];
             try {
-                const resp = await fetch('api/invitations.php?action=list_invites');
+                const params = new URLSearchParams({
+                    action: 'list_invites',
+                    scope: scope
+                });
+                const resp = await fetch(`api/invitations.php?${params.toString()}`);
                 data = await resp.json();
             } catch (err) {
-                inviteList.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 30px; color: #ef4444;">Unable to load invitations.</div>';
+                targetList.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 30px; color: #ef4444;">Unable to load invitations.</div>';
                 return;
             }
 
             if (!Array.isArray(data)) {
-                inviteList.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 30px; color: #ef4444;">Unable to load invitations.</div>';
+                targetList.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 30px; color: #ef4444;">Unable to load invitations.</div>';
                 return;
             }
 
+            if (scope === 'sent') {
+                renderSentInvitations(data);
+                return;
+            }
+
+            renderReceivedInvitations(data);
+        }
+
+        function renderReceivedInvitations(data) {
             if (data.length === 0) {
-                inviteList.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 30px; color: var(--text-muted);">No pending invitations.</div>';
+                inviteReceivedList.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 30px; color: var(--text-muted);">No pending invitations.</div>';
                 return;
             }
 
-            inviteList.innerHTML = data.map(e => `
+            inviteReceivedList.innerHTML = data.map(e => `
                 <div class="glass-container event-card">
                     <h3 class="event-title">${e.title}</h3>
                     <p style="font-size: 0.85rem; color: var(--text-muted);">From: ${e.inviter}</p>
@@ -635,6 +703,29 @@ if (!isset($_SESSION['user_id'])) {
                         <button class="btn" onclick="respondInvite(${e.id}, 'attending')">Accept</button>
                         <button class="btn" onclick="respondInvite(${e.id}, 'maybe')">Maybe</button>
                         <button class="btn" style="background: #ef4444;" onclick="respondInvite(${e.id}, 'declined')">Decline</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderSentInvitations(data) {
+            if (data.length === 0) {
+                inviteSentList.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 30px; color: var(--text-muted);">You have not sent invitations yet.</div>';
+                return;
+            }
+
+            inviteSentList.innerHTML = data.map(e => `
+                <div class="glass-container event-card">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 12px;">
+                        <h3 class="event-title" style="margin-bottom: 0;">${e.title}</h3>
+                        <span class="status-badge status-${e.invite_status_class || 'invited'}">${e.invite_status_label || 'Pending Response'}</span>
+                    </div>
+                    <p style="font-size: 0.85rem; color: var(--text-muted);">To: ${e.invitee || 'Unknown user'}</p>
+                    <p style="font-size: 0.8rem; color: var(--text-muted);">${formatEventDate(e.event_date)} - ${e.location || 'Online'}</p>
+                    <div style="display: flex; gap: 10px; margin-top: 15px; align-items: center; flex-wrap: wrap;">
+                        ${e.invite_url
+                    ? `<button class="btn btn-sm" style="width: auto;" onclick='copyInviteUrl(${JSON.stringify(e.invite_url)})'>Copy Invite Link</button>`
+                    : '<span style="font-size: 0.8rem; color: var(--text-muted);">Invite link is inactive.</span>'}
                     </div>
                 </div>
             `).join('');
@@ -654,7 +745,8 @@ if (!isset($_SESSION['user_id'])) {
                     return false;
                 }
 
-                fetchInvitations();
+                fetchInvitations('received');
+                fetchInvitations('sent');
                 fetchEvents();
                 return true;
             } catch (err) {
@@ -702,7 +794,7 @@ if (!isset($_SESSION['user_id'])) {
                 closeModal('modal-invite');
                 e.target.reset();
                 openInviteShareModal(data);
-                fetchInvitations();
+                fetchInvitations('sent');
             } catch (err) {
                 alert('Unable to send invitation right now.');
             } finally {
