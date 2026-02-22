@@ -102,25 +102,34 @@ if (!isset($_SESSION['user_id'])) {
                     </div>
                 </div>
 
-                <div class="ai-builder-section">
-                    <h3 style="display: flex; align-items: center; gap: 8px;">🚀 AI Event Builder</h3>
-                    <p
-                        style="font-size: 0.85rem; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center;">
-                        <span>Describe your event and let AI set it up for you!</span>
-                        <span class="ai-limit-badge">Limit: <span id="ai-builder-remaining">...</span> left</span>
-                    </p>
-                    <div class="ai-builder-input">
-                        <div style="flex: 1; position: relative;">
-                            <input type="text" id="ai-builder-prompt" class="form-control" maxlength="250"
-                                placeholder="e.g. A networking dinner for developers next Friday at 7pm in Downtown...">
-                            <small id="prompt-counter"
-                                style="position: absolute; right: 10px; bottom: -18px; font-size: 0.7rem; color: var(--text-muted);">0
-                                / 250</small>
+                <?php if (AI_ENABLED): ?>
+                    <div class="ai-builder-section">
+                        <h3 style="display: flex; align-items: center; gap: 8px;">🚀 AI Event Builder</h3>
+                        <p
+                            style="font-size: 0.85rem; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center;">
+                            <span>Describe your event and let AI set it up for you!</span>
+                            <span class="ai-limit-badge">Limit: <span id="ai-builder-remaining">...</span> left</span>
+                        </p>
+                        <div class="ai-builder-input">
+                            <div style="flex: 1; position: relative;">
+                                <input type="text" id="ai-builder-prompt" class="form-control" maxlength="250"
+                                    placeholder="e.g. A networking dinner for developers next Friday at 7pm in Downtown...">
+                                <small id="prompt-counter"
+                                    style="position: absolute; right: 10px; bottom: -18px; font-size: 0.7rem; color: var(--text-muted);">0
+                                    / 250</small>
+                            </div>
+                            <button class="btn ai-magic-btn" id="btn-ai-build"
+                                style="width: auto; white-space: nowrap;">Build Event</button>
                         </div>
-                        <button class="btn ai-magic-btn" id="btn-ai-build"
-                            style="width: auto; white-space: nowrap;">Build Event</button>
                     </div>
-                </div>
+                <?php else: ?>
+                    <div class="ai-builder-section" style="opacity: 0.7; pointer-events: none; border-style: dashed;">
+                        <h3 style="display: flex; align-items: center; gap: 8px;">🚀 AI Event Builder <span class="badge"
+                                style="background: var(--danger); font-size: 0.6rem;">DISABLED</span></h3>
+                        <p style="font-size: 0.85rem; color: var(--text-muted);">AI features are currently disabled by
+                            administrator.</p>
+                    </div>
+                <?php endif; ?>
 
                 <div class="event-grid" id="event-list">
                     <!-- Events load here -->
@@ -142,9 +151,13 @@ if (!isset($_SESSION['user_id'])) {
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h2 id="modal-title">Create New Event</h2>
                 <div style="display: flex; align-items: center; gap: 10px;">
-                    <span class="ai-limit-badge" style="font-size: 0.75rem;">Limit: <span
-                            id="ai-magic-remaining">...</span> left</span>
-                    <button class="btn ai-magic-btn" id="btn-ai-magic">✨ AI Magic</button>
+                    <?php if (AI_ENABLED): ?>
+                        <span class="ai-limit-badge" style="font-size: 0.75rem;">Limit: <span
+                                id="ai-magic-remaining">...</span> left</span>
+                        <button class="btn ai-magic-btn" id="btn-ai-magic">✨ AI Magic</button>
+                    <?php else: ?>
+                        <span class="badge" style="background: var(--danger); font-size: 0.75rem;">AI Magic Disabled</span>
+                    <?php endif; ?>
                 </div>
             </div>
 
@@ -246,6 +259,7 @@ if (!isset($_SESSION['user_id'])) {
             id: <?php echo $_SESSION['user_id']; ?>,
             role: '<?php echo $_SESSION['role'] ?? 'user'; ?>'
         };
+        const AI_ENABLED = <?php echo AI_ENABLED ? 'true' : 'false'; ?>;
 
         // Navigation
         function switchTab(tab) {
@@ -346,6 +360,7 @@ if (!isset($_SESSION['user_id'])) {
 
         // AI usage limit helper
         async function updateRemainingLimit() {
+            if (!AI_ENABLED) return;
             try {
                 const resp = await fetch('api/ai.php?action=get_remaining_limit');
                 const data = await resp.json();
@@ -376,73 +391,79 @@ if (!isset($_SESSION['user_id'])) {
         }
 
         // Character counter
-        document.getElementById('ai-builder-prompt').oninput = function () {
-            const len = this.value.length;
-            document.getElementById('prompt-counter').innerText = `${len} / 250`;
-        };
+        if (AI_ENABLED) {
+            document.getElementById('ai-builder-prompt').oninput = function () {
+                const len = this.value.length;
+                document.getElementById('prompt-counter').innerText = `${len} / 250`;
+            };
+        }
 
         // AI Builder
-        document.getElementById('btn-ai-build').onclick = async () => {
-            const prompt = document.getElementById('ai-builder-prompt').value;
-            if (!prompt) return alert('Tell me what event you want to build!');
+        if (AI_ENABLED) {
+            document.getElementById('btn-ai-build').onclick = async () => {
+                const prompt = document.getElementById('ai-builder-prompt').value;
+                if (!prompt) return alert('Tell me what event you want to build!');
 
-            const btn = document.getElementById('btn-ai-build');
-            btn.innerText = '✨ Building...';
-            btn.classList.add('ai-loading');
+                const btn = document.getElementById('btn-ai-build');
+                btn.innerText = '✨ Building...';
+                btn.classList.add('ai-loading');
 
-            const fd = new FormData();
-            fd.append('prompt', prompt);
+                const fd = new FormData();
+                fd.append('prompt', prompt);
 
-            try {
-                const resp = await fetch('api/ai.php?action=generate_event', { method: 'POST', body: fd });
+                try {
+                    const resp = await fetch('api/ai.php?action=generate_event', { method: 'POST', body: fd });
+                    const data = await resp.json();
+
+                    if (data.success) {
+                        const e = data.event;
+                        document.getElementById('ev-title').value = e.title;
+                        document.getElementById('ev-location').value = e.location;
+                        document.getElementById('ev-desc').value = e.description;
+                        if (e.event_date) document.getElementById('ev-date').value = e.event_date.replace(' ', 'T');
+
+                        document.getElementById('modal-event').classList.add('active');
+                        updateRemainingLimit();
+                    } else {
+                        alert(data.error);
+                    }
+                } catch (err) {
+                    alert('Connection error. Please check your network.');
+                }
+
+                btn.innerText = 'Build Event';
+                btn.classList.remove('ai-loading');
+            };
+        }
+
+        // AI Magic
+        if (AI_ENABLED) {
+            document.getElementById('btn-ai-magic').onclick = async () => {
+                const title = document.getElementById('ev-title').value;
+                const location = document.getElementById('ev-location').value;
+                if (!title) return alert('Enter a title first!');
+
+                const btn = document.getElementById('btn-ai-magic');
+                btn.innerText = '✨ Thinking...';
+                btn.classList.add('ai-loading');
+
+                const formData = new FormData();
+                formData.append('title', title);
+                formData.append('location', location);
+
+                const resp = await fetch('api/ai.php?action=suggest_description', { method: 'POST', body: formData });
                 const data = await resp.json();
 
                 if (data.success) {
-                    const e = data.event;
-                    document.getElementById('ev-title').value = e.title;
-                    document.getElementById('ev-location').value = e.location;
-                    document.getElementById('ev-desc').value = e.description;
-                    if (e.event_date) document.getElementById('ev-date').value = e.event_date.replace(' ', 'T');
-
-                    document.getElementById('modal-event').classList.add('active');
+                    document.getElementById('ev-desc').value = data.description;
                     updateRemainingLimit();
                 } else {
-                    alert(data.error);
+                    alert(data.error || 'AI Magic failed.');
                 }
-            } catch (err) {
-                alert('Connection error. Please check your network.');
-            }
-
-            btn.innerText = 'Build Event';
-            btn.classList.remove('ai-loading');
-        };
-
-        // AI Magic
-        document.getElementById('btn-ai-magic').onclick = async () => {
-            const title = document.getElementById('ev-title').value;
-            const location = document.getElementById('ev-location').value;
-            if (!title) return alert('Enter a title first!');
-
-            const btn = document.getElementById('btn-ai-magic');
-            btn.innerText = '✨ Thinking...';
-            btn.classList.add('ai-loading');
-
-            const formData = new FormData();
-            formData.append('title', title);
-            formData.append('location', location);
-
-            const resp = await fetch('api/ai.php?action=suggest_description', { method: 'POST', body: formData });
-            const data = await resp.json();
-
-            if (data.success) {
-                document.getElementById('ev-desc').value = data.description;
-                updateRemainingLimit();
-            } else {
-                alert(data.error || 'AI Magic failed.');
-            }
-            btn.innerText = '🪄 AI Magic';
-            btn.classList.remove('ai-loading');
-        };
+                btn.innerText = '🪄 AI Magic';
+                btn.classList.remove('ai-loading');
+            };
+        }
 
         // Invitations
         async function fetchInvitations() {

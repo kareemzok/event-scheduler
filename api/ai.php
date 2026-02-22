@@ -8,6 +8,17 @@ if (!isset($_SESSION['user_id'])) {
 
 $action = $_GET['action'] ?? '';
 
+// Check if AI is enabled
+if (!defined('AI_ENABLED') || AI_ENABLED !== true) {
+    if ($action !== 'get_remaining_limit') {
+        echo json_encode(['error' => 'AI features are currently disabled by administrator.']);
+        exit;
+    } else {
+        echo json_encode(['success' => true, 'remaining' => 0, 'disabled' => true]);
+        exit;
+    }
+}
+
 function callOpenAI($prompt)
 {
     if (!defined('OPENAI_API_KEY') || empty(OPENAI_API_KEY)) {
