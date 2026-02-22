@@ -43,6 +43,10 @@ function register($pdo)
 
         header('Location: ' . buildPostAuthRedirect());
     } catch (PDOException $e) {
+        if (function_exists('logAppThrowable')) {
+            logAppThrowable($e, 'User registration failed');
+        }
+
         if ($e->getCode() == 23000) {
             header('Location: ../index.php?error=already_exists');
         } else {

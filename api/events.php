@@ -52,6 +52,9 @@ function createEvent($pdo)
 
         echo json_encode(['success' => true, 'id' => $eventId]);
     } catch (PDOException $e) {
+        if (function_exists('logAppThrowable')) {
+            logAppThrowable($e, 'Create event failed');
+        }
         echo json_encode(['error' => $e->getMessage()]);
     }
 }
@@ -173,6 +176,9 @@ function updateStatus($pdo)
         $stmt->execute([$eventId, $userId, $status, $status]);
         echo json_encode(['success' => true]);
     } catch (PDOException $e) {
+        if (function_exists('logAppThrowable')) {
+            logAppThrowable($e, 'Update event status failed');
+        }
         echo json_encode(['error' => $e->getMessage()]);
     }
 }

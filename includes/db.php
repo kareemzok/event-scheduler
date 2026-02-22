@@ -10,6 +10,12 @@ try {
     ];
     $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
 } catch (\PDOException $e) {
-    // In a real app, log error and show generic message
-    die("Database connection failed: " . $e->getMessage());
+    if (function_exists('logAppThrowable')) {
+        logAppThrowable($e, 'Database connection failed');
+    } else {
+        error_log('Database connection failed: ' . $e->getMessage());
+    }
+
+    http_response_code(500);
+    die('Database connection failed. Check storage/error.log for details.');
 }

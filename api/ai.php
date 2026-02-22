@@ -39,9 +39,28 @@ function callOpenAI($prompt)
     ]);
 
     $response = curl_exec($ch);
+    if ($response === false) {
+        $curlError = curl_error($ch);
+        curl_close($ch);
+        error_log('[OpenAI request failed] ' . $curlError);
+        return ['error' => 'Failed to contact OpenAI API.'];
+    }
+
+    $httpCode = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
     curl_close($ch);
 
-    return json_decode($response, true);
+    $decoded = json_decode($response, true);
+    if (!is_array($decoded)) {
+        error_log('[OpenAI response parse failed] Invalid JSON response returned by API.');
+        return ['error' => 'Invalid response from OpenAI API.'];
+    }
+
+    if ($httpCode >= 400) {
+        $errorMessage = $decoded['error']['message'] ?? ('HTTP ' . $httpCode . ' returned by OpenAI API.');
+        error_log('[OpenAI API error] ' . $errorMessage);
+    }
+
+    return $decoded;
 }
 
 function getRemainingLimit($userId, $pdo)

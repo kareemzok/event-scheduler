@@ -69,5 +69,8 @@ try {
     echo "---------------------------\n";
 
 } catch (PDOException $e) {
+    if (function_exists('logAppThrowable')) {
+        logAppThrowable($e, 'Database seed failed');
+    }
     die("Error seeding database: " . $e->getMessage() . "\n");
 }

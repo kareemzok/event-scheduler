@@ -13,6 +13,9 @@ $userId = (int) $_SESSION['user_id'];
 try {
     ensureInvitationLinksTable($pdo);
 } catch (PDOException $e) {
+    if (function_exists('logAppThrowable')) {
+        logAppThrowable($e, 'Invitation links table setup failed');
+    }
     jsonResponse(['error' => 'Invitation links table is unavailable. Please run schema update.'], 500);
 }
 
@@ -130,6 +133,9 @@ function inviteUser(PDO $pdo, int $userId): void
     } catch (PDOException $e) {
         if ($pdo->inTransaction()) {
             $pdo->rollBack();
+        }
+        if (function_exists('logAppThrowable')) {
+            logAppThrowable($e, 'Invite user failed');
         }
         jsonResponse(['error' => 'Invitation failed. Please try again.'], 500);
     }
