@@ -138,7 +138,7 @@ define('DB_PASS', getenv('DB_PASS') ?: '');
 
 // AI Configuration
 define('OPENAI_API_KEY', getenv('OPENAI_API_KEY') ?: '');
-define('OPENAI_MODEL', getenv('OPENAI_MODEL') ?: 'gpt-4o-mini');
+define('OPENAI_MODEL', getenv('OPENAI_MODEL') ?: '');
 define('OPENAI_TEMPERATURE', getenv('OPENAI_TEMPERATURE') ?: 0.7);
 define('AI_DAILY_LIMIT', getenv('AI_DAILY_LIMIT') ?: 3);
 define('AI_ENABLED', filter_var(getenv('AI_ENABLED') ?: true, FILTER_VALIDATE_BOOLEAN));
